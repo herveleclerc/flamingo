@@ -1,0 +1,42 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: podinfo
+spec:
+  interval: 1m
+  url: https://stefanprodan.github.io/podinfo  
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: podinfo
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: podinfo
+      version: 5.0.3
+      sourceRef:
+        kind: HelmRepository
+        name: podinfo
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: podinfo
+  namespace: argocd
+spec:
+  destination:
+    namespace: flux-system
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: ./podinfo
+    repoURL: oci://ghcr.io/herveleclerc/manifests/argocd
+    targetRevision: 1.0.1
+  syncPolicy:
+    syncOptions:
+    - ApplyOutOfSyncOnly=true
+    - FluxSubsystem=true
